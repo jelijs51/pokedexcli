@@ -147,6 +147,14 @@ func commandInspect (pokemon string, pokedex map[string]pokeapi.Pokemon) error {
 	return nil
 }
 
+func commandPokedex (pokedex map[string]pokeapi.Pokemon) error {
+	fmt.Println("Your Pokedex:")
+	for key, _ := range pokedex {
+		fmt.Printf(" - %v\n",key)
+	}
+	return nil
+}
+
 type cliCommand struct {
 	name        string
 	description string
@@ -213,6 +221,13 @@ func main() {
 			description: "inspect pokemon in your pokedex",
 			callback: func() error {
 				return commandInspect(inspectPokemon, pokedex)
+			},
+		},
+		"pokedex": {
+			name: "pokedex",
+			description: "show all pokemon in pokedex",
+			callback: func() error {
+				return commandPokedex(pokedex)
 			},
 		},
 	}
