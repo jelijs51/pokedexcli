@@ -113,7 +113,7 @@ func commandCatch (pokemon string, pokedex *map[string]pokeapi.Pokemon) error {
 		fmt.Println("Pokemon not found")
 		return nil
 	}
-	if rand.Intn(55) < 80 {
+	if rand.Intn(100) < 50 {
 		fmt.Printf("%v escaped!\n", pokemon)
 		return nil
 	}
@@ -124,6 +124,26 @@ func commandCatch (pokemon string, pokedex *map[string]pokeapi.Pokemon) error {
 		return err
 	}
 	(*pokedex)[pokemon] = catchedPokemon
+	return nil
+}
+
+func commandInspect (pokemon string, pokedex map[string]pokeapi.Pokemon) error {
+	poke, ok := pokedex[pokemon]
+	if !ok {
+		fmt.Printf("%v not caught yet\n",pokemon)
+		return nil
+	}
+	fmt.Printf("Name: %v\n", poke.Name)
+	fmt.Printf("Height: %v\n", poke.Height)
+	fmt.Printf("Weight: %v\n", poke.Weight)
+	fmt.Println("Stats:")
+	for _, pokemonStat := range poke.PokemonStats{
+		fmt.Printf("  -%v: %v\n", pokemonStat.Stat.Name, pokemonStat.Value)
+	}
+	fmt.Println("Types:")
+	for _, pokemonType := range poke.PokemonType{
+		fmt.Printf("  -%v\n",pokemonType.Type.Name)
+	}
 	return nil
 }
 
@@ -144,6 +164,7 @@ func main() {
 	var LocationAreaConfig pokeapi.LocationAreaConfig
 	var area string
 	var catchPokemon string
+	var inspectPokemon string
 	pokedex := make(map[string]pokeapi.Pokemon)
 	getCommands := make(map[string]cliCommand)
 	getCommands = map[string]cliCommand{
@@ -187,6 +208,13 @@ func main() {
 				return commandCatch(catchPokemon, &pokedex)
 			},
 		},
+		"inspect": {
+			name: "inspect",
+			description: "inspect pokemon in your pokedex",
+			callback: func() error {
+				return commandInspect(inspectPokemon, pokedex)
+			},
+		},
 	}
 	for {
 		fmt.Printf("Pokedex > ")
@@ -202,6 +230,9 @@ func main() {
 		}
 		if commandName == "catch" {
 			catchPokemon = cleanedInput[1]
+		}
+		if commandName == "inspect" {
+			inspectPokemon = cleanedInput[1]
 		}
 		if command, ok := getCommands[commandName]; ok {
 			err := command.callback()
