@@ -5,9 +5,9 @@ type PokemonList struct {
 }
 
 type PokemonEncounter struct {
-	PokemonDetail Pokemon `json:"pokemon"`
+	PokemonDetail PokemonName `json:"pokemon"`
 }
 
-type Pokemon struct {
+type PokemonName struct {
 	Name string `json:"name"`
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -100,6 +101,32 @@ func commandExplore (locationArea string) error {
 	return nil
 }
 
+func commandCatch (pokemon string, pokedex *map[string]pokeapi.Pokemon) error {
+	fmt.Printf("Throwing a Pokeball at %v...\n", pokemon)
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%v/", pokemon)
+	res, err := http.Get(url)
+	defer res.Body.Close()
+	if err != nil {
+		return err
+	}
+	if res.StatusCode == http.StatusNotFound {
+		fmt.Println("Pokemon not found")
+		return nil
+	}
+	if rand.Intn(55) < 80 {
+		fmt.Printf("%v escaped!\n", pokemon)
+		return nil
+	}
+	fmt.Printf("%v was caught!\n", pokemon)
+	var catchedPokemon pokeapi.Pokemon
+	decoder := json.NewDecoder(res.Body)
+	if err := decoder.Decode(&catchedPokemon); err != nil {
+		return err
+	}
+	(*pokedex)[pokemon] = catchedPokemon
+	return nil
+}
+
 type cliCommand struct {
 	name        string
 	description string
@@ -116,6 +143,8 @@ func main() {
 	cache := pokecache.NewCache(5 * time.Minute)
 	var LocationAreaConfig pokeapi.LocationAreaConfig
 	var area string
+	var catchPokemon string
+	pokedex := make(map[string]pokeapi.Pokemon)
 	getCommands := make(map[string]cliCommand)
 	getCommands = map[string]cliCommand{
 		"exit": {
@@ -154,7 +183,9 @@ func main() {
 		"catch": {
 			name: "catch",
 			description: "catch the pokemon in area",
-			callback: commandCatch,
+			callback: func() error {
+				return commandCatch(catchPokemon, &pokedex)
+			},
 		},
 	}
 	for {
@@ -168,6 +199,9 @@ func main() {
 		commandName := cleanedInput[0]
 		if commandName == "explore" {
 			area = cleanedInput[1]
+		}
+		if commandName == "catch" {
+			catchPokemon = cleanedInput[1]
 		}
 		if command, ok := getCommands[commandName]; ok {
 			err := command.callback()
